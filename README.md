@@ -8,7 +8,10 @@ This package provides an MCP-compliant server for Frida, enabling AI systems to 
 
 ## Demo
 
-https://github.com/dnakov/frida-mcp/raw/main/docs/assets/frida-mcp.mov
+
+https://github.com/user-attachments/assets/5dc0e8f5-5011-4cf2-be77-6a77ec960501
+
+
 
 ## Features
 
