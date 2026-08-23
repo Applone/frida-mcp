@@ -32,7 +32,7 @@ This package provides an MCP-compliant server for Frida, enabling AI systems to 
 ### Quick Install
 
 ```bash
-pip install frida-mcp
+pip install frida-mcp-server
 ```
 
 ### Development Install
