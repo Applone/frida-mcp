@@ -4,18 +4,12 @@ A Model Context Protocol (MCP) implementation for Frida dynamic instrumentation 
 
 ## Overview
 
-This package provides an MCP-compliant server for Frida, enabling AI systems to interact with mobile and desktop applications through Frida's dynamic instrumentation capabilities. It uses the official [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) to enable seamless integration with AI applications.
-
-## Demo
-
-
-https://github.com/user-attachments/assets/5dc0e8f5-5011-4cf2-be77-6a77ec960501
-
-
+This package provides an MCP-compliant server for Frida, enabling AI systems to interact with mobile and desktop applications through Frida's dynamic instrumentation capabilities. It is built on [FastMCP](https://github.com/jlowin/fastmcp) to enable seamless integration with AI applications.
 
 ## Features
 
-- Built with the official MCP Python SDK
+- Built with FastMCP
+- stdio (default), streamable HTTP, and SSE transports
 - Comprehensive Frida tools exposed through MCP:
   - Process management (list, attach, spawn, resume, kill)
   - Device management (USB, remote devices)
@@ -31,7 +25,7 @@ https://github.com/user-attachments/assets/5dc0e8f5-5011-4cf2-be77-6a77ec960501
 
 ### Prerequisites
 
-- Python 3.8 or later
+- Python 3.10 or later
 - pip package manager
 - Frida 16.0.0 or later
 
@@ -49,19 +43,37 @@ git clone https://github.com/yourusername/frida-mcp.git
 cd frida-mcp
 
 # Install in development mode with extra tools
-pip install -e ".[dev]"
+uv venv && uv pip install -e ".[dev]"
 ```
 
-## Claude Desktop Integration
+## Running
 
-To use Frida MCP with Claude Desktop, you'll need to update your Claude configuration file:
+```bash
+# stdio (default, what MCP clients expect)
+frida-mcp
 
-1. Locate your Claude Desktop configuration file:
-   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-   - Linux: `~/.config/Claude/claude_desktop_config.json`
+# streamable HTTP
+frida-mcp --transport streamable-http --host 0.0.0.0 --port 1337
 
-2. Add the following to your configuration file:
+# legacy SSE
+frida-mcp --transport sse --port 1337
+```
+
+## Client Integration
+
+### Claude Code
+
+Add `frida-mcp` via the CLI:
+
+```bash
+# Stdio transport (default)
+claude mcp add frida --transport stdio -- frida-mcp
+
+# Or streamable HTTP transport
+claude mcp add frida --transport http http://127.0.0.1:1337/mcp
+```
+
+Or add it directly to your configuration file (`.mcp.json` or `~/.claude.json`):
 
 ```json
 {
@@ -73,9 +85,60 @@ To use Frida MCP with Claude Desktop, you'll need to update your Claude configur
 }
 ```
 
+### Codex
+
+Add `frida-mcp` via the Codex CLI:
+
+```bash
+# Stdio transport (default)
+codex mcp add frida -- frida-mcp
+
+# Or streamable HTTP transport
+codex mcp add frida --url http://127.0.0.1:1337/mcp
+```
+
+Or configure it in `~/.codex/config.toml` (or project `.codex/config.toml`):
+
+```toml
+# Stdio transport
+[mcp_servers.frida]
+command = "frida-mcp"
+
+# Or HTTP transport
+# [mcp_servers.frida]
+# url = "http://127.0.0.1:1337/mcp"
+```
+
+### Crush
+
+Add `frida-mcp` to your `~/.config/crush/crushrc` (or `.crushrc`):
+
+```bash
+# Stdio transport
+mcp add frida \
+  --command frida-mcp
+
+# Or streamable HTTP transport
+mcp add frida --type http \
+  --url "http://127.0.0.1:1337/mcp"
+```
+
+Or configure it in `crush.json`:
+
+```json
+{
+  "mcp": {
+    "frida": {
+      "type": "stdio",
+      "command": "frida-mcp"
+    }
+  }
+}
+```
+
 ## Usage
 
-Once installed, you can use Frida MCP directly from Claude Desktop. The server provides the following capabilities:
+Once configured, you can use Frida MCP directly from your AI agent/client (Claude Code, Codex, Crush, etc.). The server provides the following capabilities:
 
 ### Process Management
 - List all running processes
@@ -115,9 +178,12 @@ git clone https://github.com/yourusername/frida-mcp.git
 cd frida-mcp
 
 # Install development dependencies
-pip install -e ".[dev]"
+uv venv && uv pip install -e ".[dev]"
+
+# Run tests (frida is mocked, no device needed)
+python -m pytest tests -q
 ```
 
 ## License
 
-MIT
+GNU GPL v3.0

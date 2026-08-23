@@ -1,23 +1,24 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.8.0"]
+build-backend = "uv_build"
 
 [project]
 name = "frida-mcp"
-version = "0.1.1"
+version = "0.2.0"
 description = "Model Context Protocol implementation for Frida"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     "frida>=16.0.0",
-    "mcp>=1.5.0",
+    "fastmcp>=2.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "black",
     "mypy",
+    "pytest>=8.0",
 ]
 
 [project.scripts]
@@ -25,20 +26,4 @@ frida-mcp = "frida_mcp.cli:main"
 
 [tool.black]
 line-length = 88
-target-version = ["py38"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/frida_mcp"]
-include = [
-    "src/frida_mcp/*.py",
-    "README.md",
-    "LICENSE",
-]
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "src/frida_mcp/*.py",
-    "README.md",
-    "LICENSE",
-    "pyproject.toml"
-]
+target-version = ["py310"]
