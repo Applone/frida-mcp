@@ -55,12 +55,28 @@ def test_attach_returns_session_id():
 
 
 def test_spawn_resume_kill():
-    assert server.spawn_process("com.example.app") == {"pid": 4321}
+    # Test auto_attach=True (default)
+    spawned = server.spawn_process("com.example.app")
+    assert spawned["pid"] == 4321
+    assert "session_id" in spawned
     assert fake_device.spawned[-1] == ("com.example.app", [])
-    assert server.resume_process(4321) == {"success": True, "pid": 4321}
+
+    resumed = server.resume_process(4321)
+    assert resumed["success"] is True
+    assert resumed["pid"] == 4321
+    assert resumed["session_id"] == spawned["session_id"]
     assert fake_device.resumed[-1] == 4321
+
     assert server.kill_process(4321) == {"success": True, "pid": 4321}
     assert fake_device.killed[-1] == 4321
+
+    # Test auto_attach=False
+    spawned_no_attach = server.spawn_process("com.example.app", auto_attach=False)
+    assert spawned_no_attach == {"pid": 4321}
+    resumed_no_attach = server.resume_process(4321)
+    assert resumed_no_attach["success"] is True
+    assert resumed_no_attach["pid"] == 4321
+    assert "session_id" in resumed_no_attach
 
 
 def test_execute_in_session_one_shot():

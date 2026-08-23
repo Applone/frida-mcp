@@ -48,6 +48,11 @@ frida-mcp --transport streamable-http --host 0.0.0.0 --port 1337
   the global `sessions` SessionManager. `execute_in_session`,
   `get_session_messages`, and `detach_session` all key off it. There is no
   separate `create_interactive_session` anymore.
+- **`spawn_process` defaults to `auto_attach=True`**, returning both `pid` and
+  `session_id`. On jailed iOS (and for early instrumentation generally),
+  attaching before `resume_process` is required; `resume_process` also ensures
+  an attachment exists before calling Frida's `device.resume()` to prevent
+  assertion crashes in Frida's native layer.
 - **`execute_in_session` wraps user JS** in an eval-based IIFE
   (`_EXECUTION_WRAPPER`) that hijacks `console.log` and sends a one-shot
   `execution_receipt`; user code is embedded via `json.dumps`, not Python

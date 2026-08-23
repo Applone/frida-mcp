@@ -26,14 +26,29 @@ class SessionManager:
         self._scripts: Dict[str, List[frida.core.Script]] = {}
         self._messages: Dict[str, List[Dict[str, Any]]] = {}
         self._locks: Dict[str, threading.Lock] = {}
+        self._pid_map: Dict[tuple[Optional[str], int], str] = {}
+        self._session_meta: Dict[str, tuple[Optional[str], Optional[int]]] = {}
 
-    def create(self, session: frida.core.Session) -> str:
+    def create(
+        self,
+        session: frida.core.Session,
+        pid: Optional[int] = None,
+        device_id: Optional[str] = None,
+    ) -> str:
         session_id = f"session_{id(session)}_{int(time.time() * 1000)}"
         self._sessions[session_id] = session
         self._scripts[session_id] = []
         self._messages[session_id] = []
         self._locks[session_id] = threading.Lock()
+        if pid is not None:
+            self._pid_map[(device_id, pid)] = session_id
+            self._session_meta[session_id] = (device_id, pid)
         return session_id
+
+    def get_by_pid(
+        self, pid: int, device_id: Optional[str] = None
+    ) -> Optional[str]:
+        return self._pid_map.get((device_id, pid))
 
     def get(self, session_id: str) -> frida.core.Session:
         if session_id not in self._sessions:
@@ -63,12 +78,18 @@ class SessionManager:
         for script in self._scripts.pop(session_id, []):
             try:
                 script.unload()
-            except frida.InvalidOperationError:
+            except (frida.InvalidOperationError, Exception):
                 pass
         session = self._sessions.pop(session_id)
-        session.detach()
+        try:
+            session.detach()
+        except (frida.InvalidOperationError, Exception):
+            pass
         self._messages.pop(session_id, None)
         self._locks.pop(session_id, None)
+        meta = self._session_meta.pop(session_id, None)
+        if meta and meta in self._pid_map:
+            self._pid_map.pop(meta, None)
 
 
 sessions = SessionManager()
@@ -150,8 +171,11 @@ def attach_to_process(
     device_id: Annotated[Optional[str], Field(description=_DEVICE_ID_DESC)] = None,
 ) -> Dict[str, Any]:
     """Attach to a process. Returns a session_id usable with other session tools."""
-    session = _device(device_id).attach(pid)
-    session_id = sessions.create(session)
+    try:
+        session = _device(device_id).attach(pid)
+    except Exception as e:
+        raise ValueError(f"Failed to attach to process {pid}: {e}")
+    session_id = sessions.create(session, pid=pid, device_id=device_id)
     return {"success": True, "pid": pid, "session_id": session_id}
 
 
@@ -163,11 +187,30 @@ def spawn_process(
     args: Annotated[
         Optional[List[str]], Field(description="Arguments for the program")
     ] = None,
+    auto_attach: Annotated[
+        bool,
+        Field(
+            description="If true (default), automatically attaches to the spawned process and returns a session_id for early instrumentation before resume."
+        ),
+    ] = True,
     device_id: Annotated[Optional[str], Field(description=_DEVICE_ID_DESC)] = None,
 ) -> Dict[str, Any]:
-    """Spawn a program in suspended state. Use resume_process to start it."""
-    pid = _device(device_id).spawn(program, args=args or [])
-    return {"pid": pid}
+    """Spawn a program in suspended state. Returns the PID and optionally session_id (if auto_attach=True)."""
+    dev = _device(device_id)
+    try:
+        pid = dev.spawn(program, args=args or [])
+    except Exception as e:
+        raise ValueError(f"Failed to spawn '{program}': {e}")
+
+    result: Dict[str, Any] = {"pid": pid}
+    if auto_attach:
+        try:
+            session = dev.attach(pid)
+            session_id = sessions.create(session, pid=pid, device_id=device_id)
+            result["session_id"] = session_id
+        except Exception:
+            pass
+    return result
 
 
 @mcp.tool()
@@ -176,8 +219,22 @@ def resume_process(
     device_id: Annotated[Optional[str], Field(description=_DEVICE_ID_DESC)] = None,
 ) -> Dict[str, Any]:
     """Resume a process previously started with spawn_process."""
-    _device(device_id).resume(pid)
-    return {"success": True, "pid": pid}
+    dev = _device(device_id)
+    session_id = sessions.get_by_pid(pid, device_id)
+    if not session_id:
+        try:
+            session = dev.attach(pid)
+            session_id = sessions.create(session, pid=pid, device_id=device_id)
+        except Exception:
+            pass
+    try:
+        dev.resume(pid)
+    except Exception as e:
+        raise ValueError(f"Failed to resume process {pid}: {e}")
+    resp: Dict[str, Any] = {"success": True, "pid": pid}
+    if session_id:
+        resp["session_id"] = session_id
+    return resp
 
 
 @mcp.tool()
@@ -186,7 +243,16 @@ def kill_process(
     device_id: Annotated[Optional[str], Field(description=_DEVICE_ID_DESC)] = None,
 ) -> Dict[str, Any]:
     """Kill a process on the target device."""
-    _device(device_id).kill(pid)
+    session_id = sessions.get_by_pid(pid, device_id)
+    if session_id:
+        try:
+            sessions.close(session_id)
+        except Exception:
+            pass
+    try:
+        _device(device_id).kill(pid)
+    except Exception as e:
+        raise ValueError(f"Failed to kill process {pid}: {e}")
     return {"success": True, "pid": pid}
 
 
