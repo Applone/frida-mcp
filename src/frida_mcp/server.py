@@ -45,9 +45,7 @@ class SessionManager:
             self._session_meta[session_id] = (device_id, pid)
         return session_id
 
-    def get_by_pid(
-        self, pid: int, device_id: Optional[str] = None
-    ) -> Optional[str]:
+    def get_by_pid(self, pid: int, device_id: Optional[str] = None) -> Optional[str]:
         return self._pid_map.get((device_id, pid))
 
     def get(self, session_id: str) -> frida.core.Session:
