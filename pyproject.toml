@@ -22,7 +22,6 @@ dev = [
 ]
 
 [project.scripts]
-frida-mcp = "frida_mcp.cli:main"
 frida-mcp-server = "frida_mcp.cli:main"
 
 [tool.black]

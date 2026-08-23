@@ -50,24 +50,24 @@ uv venv && uv pip install -e ".[dev]"
 
 ```bash
 # stdio (default, what MCP clients expect)
-frida-mcp
+frida-mcp-server
 
 # streamable HTTP
-frida-mcp --transport streamable-http --host 0.0.0.0 --port 1337
+frida-mcp-server --transport streamable-http --host 0.0.0.0 --port 1337
 
 # legacy SSE
-frida-mcp --transport sse --port 1337
+frida-mcp-server --transport sse --port 1337
 ```
 
 ## Client Integration
 
 ### Claude Code
 
-Add `frida-mcp` via the CLI:
+Add `frida` via the CLI:
 
 ```bash
 # Stdio transport (default)
-claude mcp add frida --transport stdio -- frida-mcp
+claude mcp add frida --transport stdio -- frida-mcp-server
 
 # Or streamable HTTP transport
 claude mcp add frida --transport http http://127.0.0.1:1337/mcp
@@ -79,7 +79,7 @@ Or add it directly to your configuration file (`.mcp.json` or `~/.claude.json`):
 {
   "mcpServers": {
     "frida": {
-      "command": "frida-mcp"
+      "command": "frida-mcp-server"
     }
   }
 }
@@ -87,11 +87,11 @@ Or add it directly to your configuration file (`.mcp.json` or `~/.claude.json`):
 
 ### Codex
 
-Add `frida-mcp` via the Codex CLI:
+Add `frida` via the Codex CLI:
 
 ```bash
 # Stdio transport (default)
-codex mcp add frida -- frida-mcp
+codex mcp add frida -- frida-mcp-server
 
 # Or streamable HTTP transport
 codex mcp add frida --url http://127.0.0.1:1337/mcp
@@ -102,7 +102,7 @@ Or configure it in `~/.codex/config.toml` (or project `.codex/config.toml`):
 ```toml
 # Stdio transport
 [mcp_servers.frida]
-command = "frida-mcp"
+command = "frida-mcp-server"
 
 # Or HTTP transport
 # [mcp_servers.frida]
@@ -111,12 +111,12 @@ command = "frida-mcp"
 
 ### Crush
 
-Add `frida-mcp` to your `~/.config/crush/crushrc` (or `.crushrc`):
+Add `frida` to your `~/.config/crush/crushrc` (or `.crushrc`):
 
 ```bash
 # Stdio transport
 mcp add frida \
-  --command frida-mcp
+  --command frida-mcp-server
 
 # Or streamable HTTP transport
 mcp add frida --type http \
@@ -130,7 +130,7 @@ Or configure it in `crush.json`:
   "mcp": {
     "frida": {
       "type": "stdio",
-      "command": "frida-mcp"
+      "command": "frida-mcp-server"
     }
   }
 }

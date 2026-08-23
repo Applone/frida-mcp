@@ -7,7 +7,7 @@ from .server import mcp
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="frida-mcp",
+        prog="frida-mcp-server",
         description="MCP server exposing the Frida dynamic instrumentation toolkit.",
     )
     parser.add_argument(

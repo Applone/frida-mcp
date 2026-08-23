@@ -12,7 +12,7 @@ etc.). Built on **FastMCP 3.x** (the `fastmcp` package), not the low-level
 - `src/frida_mcp/server.py` — the FastMCP app, all `@mcp.tool()` /
   `@mcp.resource()` definitions, and the `SessionManager` class that owns
   sessions, persistent scripts, and message queues.
-- `src/frida_mcp/cli.py` — argparse entry point (`frida-mcp`), selects
+- `src/frida_mcp/cli.py` — argparse entry point (`frida-mcp-server`), selects
   transport (`stdio` default, `streamable-http`, `sse`) and host/port.
 - `tests/` — pytest suite. `tests/conftest.py` installs a **fake `frida`
   module into `sys.modules` before any test imports the server**, so tests run
@@ -26,8 +26,8 @@ etc.). Built on **FastMCP 3.x** (the `fastmcp` package), not the low-level
 ```bash
 uv venv && uv pip install -e ".[dev]"
 .venv/bin/python -m pytest tests -q      # tests
-frida-mcp                                # stdio server
-frida-mcp --transport streamable-http --host 0.0.0.0 --port 1337
+frida-mcp-server                         # stdio server
+frida-mcp-server --transport streamable-http --host 0.0.0.0 --port 1337
 ```
 
 ## Gotchas
