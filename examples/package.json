@@ -1,0 +1,11 @@
+{
+  "name": "frida-mcp-agents",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "frida-objc-bridge": "8.0.6"
+  },
+  "devDependencies": {
+    "@types/frida-gum": "18.8.2"
+  }
+}

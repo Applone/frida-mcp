@@ -1,0 +1,6 @@
+/bin/
+/.deps/
+/coverage.out
+__pycache__/
+*.pyc
+/examples/node_modules/
