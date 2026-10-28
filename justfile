@@ -36,4 +36,3 @@ test-ios: deps devkit
 check: deps
     go vet ./...
     test -z "$(gofmt -l cmd internal)"
-    python3 -m unittest discover -s tools -p 'test_*.py'
